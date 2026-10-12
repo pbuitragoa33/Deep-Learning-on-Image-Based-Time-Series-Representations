@@ -1,0 +1,8 @@
+{
+    "start_date": "2018-05-01",
+    "end_date": "2026-10-7",
+    "assets": ["XLE", "COPX", "SPY", "VIXY", "PDBC"], 
+    "dataset": "XNAS.ITCH",
+    "schema": "ohlcv-1m",
+    "output_databricks_path": ""
+}
