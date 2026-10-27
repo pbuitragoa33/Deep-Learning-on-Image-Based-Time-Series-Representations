@@ -22,6 +22,7 @@ from pathlib import Path
 from datetime import datetime, date
 
 
+
 # Class: Raw Data Extractor
 
 class RawDataExtractor():
@@ -38,6 +39,7 @@ class RawDataExtractor():
         self.dataset = dataset
         self.schema = schema
         self.root = root
+        self.logs_path = logs_path
 
     # Method 1: generate_months
 
@@ -45,8 +47,8 @@ class RawDataExtractor():
 
         # Generate each month between the start date and the end date
 
-        st_year, st_month, st_day = start_date.split("-")
-        en_year, en_month, en_day = end_date.split("-")
+        st_year, st_month, st_day = self.start_date.split("-")
+        en_year, en_month, en_day = self.end_date.split("-")
         
         months = pl.date_range(start = date(int(st_year), int(st_month), int(st_day)), 
                       end = date(int(en_year), int(en_month), int(en_day)),
@@ -65,8 +67,6 @@ class RawDataExtractor():
 
         path = (
             Path(self.root)
-            / f"dataset={self.dataset}"
-            / f"schema={self.schema}"
             / f"symbol={symbol}"
             / f"year={year}"
             / f"month={month:02d}"
@@ -115,20 +115,107 @@ class RawDataExtractor():
 
     # Method 5: download_task
 
+    def download_task(self, symbol, start, end):
 
+        store = self.client.timeseries.get_range(dataset = self.dataset,
+                                                 symbols = symbol,
+                                                 schema = self.schema,
+                                                 start = start,
+                                                 end = end)
+
+        df = pl.from_pandas(store.to_df().reset_index())
+
+        return df
+
+    # Method 6: save_task
+
+    def save_task(self, df, path):
+
+        df = df.drop("symbol")
+
+        path.parent.mkdir(parents = True, exist_ok = True)
+
+        df.write_parquet(path)
+
+        return None
+
+    # Method 7: run (main orchestrator)
+
+    def run(self):
+
+        print("Starting: Data Download")
+
+        # Start timer
+        start_time = time.perf_counter()
+
+        # 1. Window generator
+
+        windows = self.generate_month_windows()
+
+        # 2. Tasks and cost estimations
+
+        tasks = self.pending_tasks()
+        cost = self.cost_estimation(tasks)
+
+        print(f"Windows: {len(windows)} | first: {windows[0]} | last: {windows[-1]}")  
+        print(f"Pending tasks: {len(tasks)}")
+        print(f"Max estimated cost: $ {cost:.2f}")
+
+        # 3. Download tasks
+
+        for symbol, start, end, path in tasks:
+
+            df = self.download_task(symbol, start, end)
+
+            if df.height == 0:
+
+                print(f"{symbol} {start}: empty, skipped")
+
+                continue
+
+            self.save_task(df, path)
+
+            print(f"{symbol} {start}: {df.height} rows")
+
+        pending_after = len(self.pending_tasks())
+
+        print(f"Pending after download: {pending_after}")
+
+        # End timer
+
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+
+        print(f"Execution time: {total_time:.3f} s")
+        print("Finished: Data Download")
+
+        # Logs handling
+
+        if self.logs_path:
+
+            Path(self.logs_path).parent.mkdir(parents = True, exist_ok = True)
+
+            with open(self.logs_path, "a", encoding = "utf-8") as file:
+
+                file.write("------------------  DOWNLOAD METADATA ------------------ " + "\n")
+                file.write("\n")
+                file.write(f"Execution date: {datetime.now():%Y-%m-%d %H:%M}" + "\n")
+                file.write(f"Number of windows: {len(windows)}" + "\n")
+                file.write(f"First window: {windows[0]} | Last window: {windows[-1]}" + "\n")
+                file.write(f"Execution time: {total_time:.3f} s" + "\n")
+                file.write(f"Estimated cost: {cost:.2f}" + "\n")
+                file.write("--" * 50 + "\n")
+
+        else:
+
+            print("LOGS_PATH is not set in .env")
 
         
-
-        
-
-    
-
-        
+       
+# Execution
+ 
 
 if __name__ == "__main__":
-
-    # Execution
-
 
     # Load the environment variable
 
@@ -141,42 +228,30 @@ if __name__ == "__main__":
     download_configs_path = os.getenv("DOWNLOAD_CONFIGS_PATH")
 
     # Output root
-    root = os.getenv("OUTPUT_ROOT")
+    output_root = os.getenv("OUTPUT_ROOT")
 
-    # Open the configs file (dict) and set the configurations as variables
+    # Execution logs path
+    logs_path = os.getenv("LOGS_PATH")
+
+    # Open the configs file 
 
     with open(file = download_configs_path, mode = "r", encoding = "utf-8") as configs_download:
 
         params = json.load(configs_download)
 
-    start_date = params["start_date"]
-    end_date = params["end_date"]
-    assets = params["assets"]
-    dataset = params["dataset"]
-    schema = params["schema"]
+    # Class instance
 
+    RDE = RawDataExtractor(
+        db_key = databento_api_key,
+        start_date = params["start_date"], 
+        end_date = params["end_date"], 
+        assets = params["assets"],
+        dataset = params["dataset"],
+        schema = params["schema"],
+        root = output_root,
+        logs_path = logs_path
+    )
 
-    # Class instannce
+    # Run the pipeline
 
-    RDE = RawDataExtractor(db_key = databento_api_key,
-                           start_date = start_date, 
-                           end_date = end_date, 
-                           assets = assets,
-                           dataset = dataset,
-                           schema = schema,
-                           root = root)
-
-    # 1. Window generator
-
-    windows = RDE.generate_month_windows()
-
-    # 2. Tasks and cost estimations
-
-    tasks = RDE.pending_tasks()
-
-    print(f"Windows: {len(windows)} | first: {windows[0]} | last: {windows[-1]}")  
-
-    print(f"Pending tasks: {len(tasks)}")
-    print(f"Estimated cost: $ {RDE.cost_estimation(tasks):.2f}")
-    print(f"Cost per month of a given asset: ${(RDE.cost_estimation(tasks) / len(tasks)):.5f}")
-
+    RDE.run()
