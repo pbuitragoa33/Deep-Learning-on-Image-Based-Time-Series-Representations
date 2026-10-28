@@ -436,3 +436,6 @@ venv_DLITSR/
 
 # Logs
 .log
+
+# Data layer
+data/
