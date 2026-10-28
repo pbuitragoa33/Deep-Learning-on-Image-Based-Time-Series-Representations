@@ -29,7 +29,7 @@ class RawDataExtractor():
 
     # Class Constructor - Attributes initialization
 
-    def __init__(self, db_key, start_date, end_date, assets, dataset, schema, root):
+    def __init__(self, db_key, start_date, end_date, assets, dataset, schema, root, logs_path):
 
         self.db_key = db_key
         self.client = db.Historical(db_key)
