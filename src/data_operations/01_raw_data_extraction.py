@@ -1,11 +1,11 @@
-# 1. Raw Data Extraction
+# 1. Raw Data Extraction (BRONZE LAYER)
 
 
 # This file aims to: 
 
 #   - Download the specified assets, schema and parameters from Databento
-#   - Follow a tidy folder structure 
-#   - The storage is set to be done in Databricks
+#   - Follow a tidy folder structure in order to store information
+#   - Consolidate a local copy of the bronze data layer
 
 
 # Libraries
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     download_configs_path = os.getenv("DOWNLOAD_CONFIGS_PATH")
  
     # Output root
-    output_root = os.getenv("OUTPUT_ROOT")
+    bronze_root = os.getenv("BRONZE_ROOT")
  
     # Execution logs path
     logs_path = os.getenv("LOGS_PATH")
@@ -322,7 +322,7 @@ if __name__ == "__main__":
         assets = params["assets"],
         dataset = params["dataset"],
         schema = params["schema"],
-        root = output_root,
+        root = bronze_root,
         logs_path = logs_path
     )
  
