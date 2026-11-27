@@ -3,6 +3,5 @@
     "end_date": "2026-10-28",
     "assets": ["XLE", "SPY", "VIXY", "USO", "TLT"], 
     "dataset": "XNAS.ITCH",
-    "schema": "ohlcv-1m",
-    "output_databricks_path": ""
+    "schema": "ohlcv-1m"
 }
