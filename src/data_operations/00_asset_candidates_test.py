@@ -29,9 +29,7 @@ END = "2026-10-28"
 # TLT, IEF, UUP, HYG, GLD, EEM: gold, global growth, bonds
 
 REFERENCE = ["SPY", "XLE", "VIXY"]
-CANDIDATES = ["USO", "BNO", "UNG", "XOP", "OIH",  
-              "TLT", "IEF", "UUP", "HYG",       
-              "GLD", "EEM"]                        
+CANDIDATES = ["USO", "BNO", "UNG", "XOP", "OIH", "TLT", "IEF", "UUP", "HYG", "GLD", "EEM"]                        
 
 
 # Function 1: year_windows
