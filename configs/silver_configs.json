@@ -1,0 +1,10 @@
+{
+    "splits": [
+        {"symbol": "USO",  "ex_date": "2020-04-29", "factor": 0.125},
+        {"symbol": "VIXY", "ex_date": "2021-05-26", "factor": 0.25},
+        {"symbol": "VIXY", "ex_date": "2023-06-23", "factor": 0.2},
+        {"symbol": "VIXY", "ex_date": "2024-11-07", "factor": 0.25},
+        {"symbol": "XLE",  "ex_date": "2025-12-05", "factor": 2}
+    ],
+    "degraded_days": ["2021-07-07", "2021-10-26", "2022-09-19"]
+}
